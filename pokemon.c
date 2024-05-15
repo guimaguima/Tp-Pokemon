@@ -1,15 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX_NOMES 100
+#define MAX_NOMES 50
+#define MAX_TIME 100
 
 typedef struct{
     float vida;
     char *nome;
     int tipo;
     float ataque;
-    int defesa;
+    unsigned int defesa;
 }Pokemon;//estrutura de um pokemon
+
+//verifica se os times estão no máximo correto
+void* verify_times(int *times){
+    if(times[0]>MAX_TIME || times[1]>MAX_TIME) {
+        printf("Tipo Inválido");
+        exit(1);
+    }
+    return 0;
+}
 
 //pega os times pre-determinados no inicio do txt
 int * get_times(){
@@ -23,8 +33,18 @@ int * get_times(){
 
     int *times = (int*)malloc(2*sizeof(int));//cria o vetor para retornar como pointer
     fscanf(file, " %d %d",&times[0],&times[1]);
+    verify_times(times);
     fclose(file);
     return times;
+}
+
+
+//verifica se os numeoros do pokemons estão com os dados corretos
+void verify_pokemon(Pokemon pokemon){
+    if(pokemon.defesa == 0 || pokemon.vida==0 || pokemon.ataque==0){
+        printf("Tipo Inválido");
+        exit(1);
+    }
 }
 
 /*
@@ -37,8 +57,11 @@ int get_tipo(char *tipo){
     else if(strcmp(tipo,"água")==0) return 2;
     else if(strcmp(tipo,"fogo")==0) return 3;
     else if(strcmp(tipo,"gelo")==0) return 4;
-    else return 5;
-
+    else if(strcmp(tipo,"pedra")==0) return 5;
+    else{
+        printf("Tipo Inválido");
+        exit(1);
+    }
 }
 /*
 retorna a efetividade. Para isso, usa a distancia, se 1 ou -1, tem efetividade, se não 0. Utiliza
@@ -76,7 +99,7 @@ void combate(Pokemon *player1, Pokemon *player2){
     while (i!=0 && j!=0){
         if(turno%2==0){//player 1
             player2[pk2].vida = player2[pk2].vida - get_dano(player1[pk1],player2[pk2]);
-             if(player2[pk2].vida==0){
+             if(player2[pk2].vida<=0){
                 printf("%s venceu %s\n", player1[pk1].nome, player2[pk2].nome);
                 pk2++;
                 j--;
@@ -84,7 +107,7 @@ void combate(Pokemon *player1, Pokemon *player2){
         }
         else{//player 2
             player1[pk1].vida = player1[pk1].vida - get_dano(player2[pk2],player1[pk1]);
-            if(player1[pk1].vida==0){
+            if(player1[pk1].vida<=0){
                 printf("%s venceu %s\n", player2[pk2].nome, player1[pk1].nome);
                 pk1++;
                 i--;
@@ -122,10 +145,10 @@ void combate(Pokemon *player1, Pokemon *player2){
         }
 
     }
-    
+    free(times);
 }
 
-//pega os pokemons e ordena conforme os players
+//pega os pokemons e inserir conforme os players
 Pokemon  **get_players(){
     FILE* file;
     file = fopen("input.txt","r");
@@ -136,12 +159,14 @@ Pokemon  **get_players(){
 
     int times[2];
     fscanf(file, " %d %d",&times[0],&times[1]);
-    Pokemon **players = (Pokemon**)malloc( 2 * sizeof(Pokemon*));//matriz de 2 vetores, cada um sendo um player
+    Pokemon **players = (Pokemon**)malloc( 2 * sizeof(Pokemon*));
+    //matriz de 2 vetores, cada um sendo um player
     if (players == NULL) {
         printf("Erro ao alocar memória.\n");
         exit(1);
     }
 
+    verify_times(times);
 
     for (int j = 0; j < 2; j++){
         players[j] = (Pokemon*)malloc( times[j] * sizeof(Pokemon));//players
@@ -152,6 +177,7 @@ Pokemon  **get_players(){
             players[j][i].nome, &players[j][i].ataque, 
             &players[j][i].defesa,&players[j][i].vida, temp);//leitura do pokemon
             players[j][i].tipo = get_tipo(temp);//pega o tipo
+            verify_pokemon(players[j][i]);
         }
     }
 
@@ -178,5 +204,6 @@ int main(){
         
     }
     free(players);
+    free(times);
     return 0;
 }
