@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_NOMES 50
-#define MAX_TIME 100
+#define MAX_NOMES 50 //máximo de characteres por nome
+#define MAX_TIME 100 //máximo de pokemons por time
 
 typedef struct{
     float vida;
@@ -24,14 +24,14 @@ void* verify_times(int *times){
 
 //verifica se os numeros do pokemons estão com os dados corretos
 void verify_pokemon(Pokemon pokemon){
-    if(pokemon.defesa == 0 || pokemon.vida==0 || pokemon.ataque==0){
+    if(pokemon.defesa <= 0 || pokemon.vida<=0 || pokemon.ataque<=0){
         printf("Atributo(s) do Pokemon %s inválido(s)",pokemon.nome);
         exit(1);
     }
 }
 
 /*
-pega os tipos. A ideia dos tipos é utilizar a nomeclatura decimal para poder utilizar a diferença
+pega os tipos. A ideia dos tipos é utilizar a nomeclatura decimal para poder verificar a diferença
 absoluta deles para saber se é ou não alterado o golpe, representando um "circulo". Aqueles cuja
  diferença é de 1, é superefetivo, e -1, resistente. 
 */
@@ -62,7 +62,7 @@ float set_efetividade(Pokemon atacante, Pokemon defensor){
     }
 }
 
-//pega o dano dado dois pokemons. utiliza do 1 e -1 como dito anteriormente
+//pega o dano dado dois pokemons. utiliza da efetividade como bonus multiplicador
 float get_dano(Pokemon atacante, Pokemon defensor){
     float dano_efetivo=0;
     float efetividade = set_efetividade(atacante,defensor);
@@ -73,6 +73,7 @@ float get_dano(Pokemon atacante, Pokemon defensor){
     return dano_efetivo;
 }
 
+// função de saida conforme o especificado no enunciado
 void print_vencedor(Pokemon *player1, Pokemon *player2,int pk1, int pk2 , int * times, int ganhador){
     printf("Jogador %d venceu \n",ganhador);
 
@@ -127,7 +128,7 @@ void combate(Pokemon *player1, Pokemon *player2, int * times){
     //ponteiro para o pokemon atual dos jogadores
         if(turno%2==0){//player 1
             pokemon_player2->vida = pokemon_player2->vida - get_dano(*pokemon_player1,*pokemon_player2);
-            if(pokemon_player2->vida<=0){
+            if(pokemon_player2->vida<=0){//player2 teve seu pokemon derrotado
                 printf("%s venceu %s\n", pokemon_player1->nome, pokemon_player2->nome);
                 pk2++;
                 j--;
@@ -135,7 +136,7 @@ void combate(Pokemon *player1, Pokemon *player2, int * times){
         }
         else{//player 2
             pokemon_player1->vida = pokemon_player1->vida - get_dano(*pokemon_player2,*pokemon_player1);
-            if(pokemon_player1->vida<=0){
+            if(pokemon_player1->vida<=0){//player1 teve seu pokemon derrotado
                 printf("%s venceu %s\n", pokemon_player2->nome, pokemon_player1->nome);
                 pk1++;
                 i--;
@@ -172,7 +173,7 @@ Pokemon  **get_players(int * times){
         exit(1);
     }
 
-    verify_times(times);
+    verify_times(times);//verifica times
 
     for (int j = 0; j < 2; j++){
         players[j] = (Pokemon*)malloc( times[j] * sizeof(Pokemon));//players
@@ -182,7 +183,7 @@ Pokemon  **get_players(int * times){
             fscanf(file, " %s %f %d %f %s", 
             players[j][i].nome, &players[j][i].ataque, 
             &players[j][i].defesa,&players[j][i].vida, temp);//leitura do pokemon
-            players[j][i].tipo = get_tipo(temp);//pega o tipo
+            players[j][i].tipo = get_tipo(temp);//pega o tipo em decimal
             verify_pokemon(players[j][i]);
         }
     }
@@ -194,13 +195,16 @@ Pokemon  **get_players(int * times){
 
 int main(){
     int times[2];
+    //vetor de quantidade de pokemons por time, '0' == player 1 e '1' == player 2
 
     Pokemon **players = get_players(times); 
+    //pega os players do arquivo
 
     combate(players[0],players[1],times);
 
     printf("\n");
 
+    //libera a memória alocada
     for (int j = 0; j < 2; j++) {
         for (int i = 0; i < times[j]; i++){
             free(players[j][i].nome);
